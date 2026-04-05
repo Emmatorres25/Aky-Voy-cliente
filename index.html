@@ -219,10 +219,52 @@ function rmC(i){S.cart.splice(i,1);sv('ak_cart',S.cart);rC()}
 
 function sP(total){var code='AK-'+String(Math.floor(Math.random()*9000)+1000);om('<h3 style="font-weight:700;font-size:15px;margin-bottom:12px"><i class="fas fa-credit-card" style="color:var(--pl);margin-right:6px"></i>Pago</h3><div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"><label class="gc" style="padding:8px;display:flex;align-items:center;gap:8px;cursor:pointer;border-color:var(--p)"><input type="radio" name="pm" checked style="accent-color:#7C3AED"><i class="fab fa-cc-visa" style="font-size:16px;color:#1A1F71"></i><span style="font-size:12px">Visa ****4242</span></label><label class="gc" style="padding:8px;display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="pm" style="accent-color:#7C3AED"><i class="fab fa-cc-mastercard" style="font-size:16px;color:#EB001B"></i><span style="font-size:12px">Mastercard ****8888</span></label><label class="gc" style="padding:8px;display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="pm" style="accent-color:#7C3AED"><i class="fas fa-money-bill" style="font-size:16px;color:var(--ok)"></i><span style="font-size:12px">Efectivo</span></label></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px;font-weight:700"><span>Total</span><span style="color:var(--pl)">Q'+total.toFixed(2)+'</span></div><button onclick="pP(\''+code+'\','+total+')" class="bA" style="width:100%;padding:11px"><i class="fas fa-lock" style="margin-right:4px"></i>Confirmar Pago</button>')}
 
-function pP(code,total){cm();var order={code:code,rn:S.cart[0].rn,rid:S.cart[0].rid,items:S.cart.slice(),total:total,status:'pending',time:new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}),date:new Date().toLocaleDateString('es'),driver:null};S.orders.unshift(order);sv('ak_c_o',S.orders);S.cart=[];sv('ak_cart',S.cart);rC();rO();toast('Pedido Confirmado','Pedido '+code+' creado','ok');sm('restaurant','new_order',{orderCode:code,restId:order.rid,items:order.items.map(function(i){return i.n+' x'+i.q}).join(', '),total:order.total,client:S.user});setTimeout(function(){if(order.status==='pending'){order.status='accepted';sv('ak_c_o',S.orders);rO();toast('Pedido Aceptado',order.rn+' aceptó '+code,'ok');uB()}},4000);setTimeout(function(){if(order.status==='accepted'){order.status='delivering';order.driver='Carlos M.';S.tO=code;sv('ak_c_o',S.orders);rO();toast('Repartidor en Camino','Carlos M. va por tu pedido','ok');uB()}},8000)}
+async function pP(code,total){
+  cm();
+  var order={
+    code:code,
+    rn:S.cart[0].rn,
+    rid:S.cart[0].rid,
+    items:S.cart.slice(),
+    total:total,
+    status:'pending',
+    time:new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}),
+    date:new Date().toLocaleDateString('es'),
+    driver:null
+  };
 
-function rO(filter){filter=filter||'active';var el=document.getElementById('t-orders');var act=[],hist=[];for(var i=0;i<S.orders.length;i++){var o=S.orders[i];if(o.status!=='delivered'&&o.status!=='cancelled')act.push(o);else hist.push(o)}var list=filter==='active'?act:hist;var sm={pending:{t:'Pendiente',c:'bWn'},accepted:{t:'Aceptado',c:'bPr'},delivering:{t:'En Camino',c:'bOk'},delivered:{t:'Entregado',c:'bOk'},cancelled:{t:'Cancelado',c:'bNo'}};var h='<div class="page"><div style="padding:12px 14px"><h3 style="font-weight:700;font-size:15px;margin-bottom:10px">Mis Pedidos</h3><div style="display:flex;gap:3px;padding:3px;border-radius:10px;margin-bottom:10px;background:var(--bg);border:1px solid var(--bd)"><button onclick="rO(\'active\')" style="flex:1;padding:7px;border-radius:7px;font-size:11px;font-weight:500;border:none;cursor:pointer;background:'+(filter==='active'?'var(--pd)':'transparent')+';color:'+(filter==='active'?'#fff':'var(--tx3)')+'">Activos ('+act.length+')</button><button onclick="rO(\'history\')" style="flex:1;padding:7px;border-radius:7px;font-size:11px;font-weight:500;border:none;cursor:pointer;background:'+(filter==='history'?'var(--pd)':'transparent')+';color:'+(filter==='history'?'#fff':'var(--tx3)')+'">Historial</button></div>';
-if(!list.length){h+='<div style="text-align:center;padding:30px 0;color:var(--tx3)">Sin pedidos</div>'}else{for(var i=0;i<list.length;i++){var o=list[i];var s=sm[o.status]||sm.pending;h+='<div class="gc aU" style="padding:12px;margin-bottom:6px;'+(o.status==='delivering'?'cursor-pointer':'')+'" '+(o.status==='delivering'?'onclick="goT(\'track\')"':'')+'><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-weight:700;font-size:12px;color:var(--pl)">'+o.code+'</span><span class="badge '+s.c+'">'+s.t+'</span></div><div style="font-size:12px;font-weight:600;margin-bottom:3px">'+o.rn+'</div><div style="font-size:10px;color:var(--tx3);margin-bottom:4px">';for(var j=0;j<o.items.length;j++){h+=o.items[j].n+' x'+o.items[j].q+(j<o.items.length-1?', ':'')}h+='</div><div style="display:flex;align-items:center;justify-content:space-between;font-size:12px"><span style="color:var(--tx2)">'+o.time+'</span><span style="font-weight:700">Q'+o.total.toFixed(2)+'</span></div>'+(o.status==='delivering'?'<button class="bP" style="width:100%;margin-top:6px;font-size:10px;padding:7px"><i class="fas fa-location-dot"></i>Ver en Mapa</button>':'')+'</div>'}}h+='</div></div>';el.innerHTML=h}
+  // --- NUEVO: GUARDAR EN SUPABASE ---
+  const { data, error } = await _supabase
+    .from('pedidos')
+    .insert([
+      { 
+        detalle: JSON.stringify(order.items), // Guarda la lista de platos
+        Estado: 'Pendiente',
+        // Si quieres guardar el total o el nombre del comercio, asegúrate de tener las columnas en Supabase
+      }
+    ]);
+
+  if (error) {
+    console.error('Error al enviar a Supabase:', error);
+    toast('Error', 'No se pudo conectar con la base de datos', 'no');
+  } else {
+    console.log('Pedido guardado en la nube!');
+  }
+  // --- FIN DE LO NUEVO ---
+
+  S.orders.unshift(order);
+  sv('ak_c_o',S.orders);
+  S.cart=[];
+  sv('ak_cart',S.cart);
+  rC();
+  rO();
+  toast('Pedido Confirmado','Pedido '+code+' creado','ok');
+  
+  // Tu lógica de notificaciones local sigue igual
+  sm('restaurant','new_order',{orderCode:code,restId:order.rid,items:order.items.map(function(i){return i.n+' x'+i.q}).join(', '),total:order.total,client:S.user});
+  
+  setTimeout(function(){if(order.status==='pending'){order.status='accepted';sv('ak_c_o',S.orders);rO();toast('Pedido Aceptado',order.rn+' aceptó '+code,'ok');uB()}},4000);
+}
 
 function uoS(code,st){var o=mf(S.orders,function(x){return x.code===code});if(o){o.status=st;sv('ak_c_o',S.orders)}}
 function uB(){var n=0;for(var i=0;i<S.orders.length;i++){var o=S.orders[i];if(o.status==='accepted'||o.status==='delivering')n++}var b=document.getElementById('nB');if(n>0){b.style.display='block';b.textContent=n}else{b.style.display='none'}}
