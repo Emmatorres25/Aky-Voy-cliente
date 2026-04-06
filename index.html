@@ -29,20 +29,17 @@ body{background:var(--bg);color:var(--tx);min-height:100vh}
 <div id="pgL" class="flex items-center justify-center min-h-screen p-10">
     <div class="gc w-full max-w-md text-center">
         <h2 class="text-2xl font-bold mb-4">AkyVoy</h2>
-        <p class="text-sm text-gray-400 mb-6">Ingresa con tu correo para pedir comida</p>
-        <input id="lE" type="email" class="w-full p-3 bg-gray-900 border border-gray-700 rounded mb-3" placeholder="Tu Correo Electrónico">
-        <input id="lP" type="password" class="w-full p-3 bg-gray-900 border border-gray-700 rounded mb-3" placeholder="Contraseña">
-        <div class="flex gap-2">
-            <button onclick="doLogin()" class="bP flex-1">Iniciar Sesión</button>
-            <button onclick="doSignUp()" class="bP flex-1 bg-gray-700">Registrarse</button>
-        </div>
+        <p class="text-sm text-gray-400 mb-6">Ingresa con tu nombre y teléfono</p>
+        <input id="lNom" class="w-full p-3 bg-gray-900 border border-gray-700 rounded mb-3" placeholder="Tu Nombre">
+        <input id="lTel" type="tel" class="w-full p-3 bg-gray-900 border border-gray-700 rounded mb-3" placeholder="Tu Teléfono">
+        <button onclick="doLogin()" class="bP w-full">Entrar / Registrarse</button>
     </div>
 </div>
 
 <div id="pgA" style="display:none">
     <header class="p-4 border-bottom border-gray-800 flex justify-between items-center">
         <span class="font-bold">AkyVoy</span>
-        <button onclick="doLogout()" class="text-xs text-red-400">Cerrar Sesión</button>
+        <button onclick="location.reload()" class="text-xs text-red-400">Salir</button>
     </header>
     <div id="t-home" class="page">
         <h2 class="text-xl font-bold mb-4">Comedores Disponibles</h2>
@@ -73,44 +70,24 @@ function toast(t, m) {
     setTimeout(() => el.remove(), 3000);
 }
 
-// --- AUTENTICACIÓN ---
-async function doSignUp() {
-    const email = document.getElementById('lE').value;
-    const password = document.getElementById('lP').value;
-    if(!email || !password) return alert('Completa todos los campos');
-    
-    const { data, error } = await _supabase.auth.signUp({ email, password });
-    if(error) toast('Error', error.message);
-    else toast('Éxito', 'Revisa tu correo para confirmar el registro');
-}
-
 async function doLogin() {
-    const email = document.getElementById('lE').value;
-    const password = document.getElementById('lP').value;
-    if(!email || !password) return alert('Completa todos los campos');
+    const nombre = document.getElementById('lNom').value;
+    const tel = document.getElementById('lTel').value;
+    if(!nombre || !tel) return alert('Completa los campos');
     
-    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-    if(error) toast('Error', error.message);
-    else {
-        S.user = data.user;
-        checkSession();
+    // Buscar o Crear Perfil de Cliente
+    const { data: perfil, error } = await _supabase.from('perfiles').select('*').eq('id', tel).single();
+    
+    if(!perfil) {
+        const { error: insErr } = await _supabase.from('perfiles').insert([{ id: tel, nombre, telefono: tel, rol: 'cliente', activo: true }]);
+        if(insErr) return toast('Error', insErr.message);
     }
-}
-
-async function doLogout() {
-    await _supabase.auth.signOut();
-    location.reload();
-}
-
-async function checkSession() {
-    const { data: { user } } = await _supabase.auth.getUser();
-    if(user) {
-        S.user = user;
-        document.getElementById('pgL').style.display = 'none';
-        document.getElementById('pgA').style.display = 'block';
-        renderRests();
-        cargarPedidos();
-    }
+    
+    S.user = { id: tel, nombre };
+    document.getElementById('pgL').style.display = 'none';
+    document.getElementById('pgA').style.display = 'block';
+    renderRests();
+    cargarPedidos();
 }
 
 function goT(t) {
@@ -121,10 +98,10 @@ function goT(t) {
 }
 
 async function renderRests() {
-    const { data: rests } = await _supabase.from('comercios').select('*').eq('activo', true);
+    const { data: rests } = await _supabase.from('perfiles').select('*').eq('rol', 'comedor').eq('activo', true);
     const list = document.getElementById('rest-list');
     if(!rests || rests.length === 0) {
-        list.innerHTML = '<p class="text-center text-gray-500">No hay comedores activos en este momento.</p>';
+        list.innerHTML = '<p class="text-center text-gray-500">No hay comedores activos.</p>';
         return;
     }
     list.innerHTML = rests.map(r => `
@@ -133,7 +110,7 @@ async function renderRests() {
                 <img src="${r.foto_perfil || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-lg object-cover">
                 <div>
                     <h3 class="font-bold">${r.nombre}</h3>
-                    <p class="text-xs text-gray-400">${r.categoria || 'Comida'}</p>
+                    <p class="text-xs text-gray-400">Comedor Autorizado</p>
                 </div>
             </div>
             <button onclick="crearPedido('${r.id}', '${r.nombre}')" class="bP mt-3 text-xs w-full">Pedir Ahora</button>
@@ -144,7 +121,7 @@ async function renderRests() {
 async function crearPedido(rid, rname) {
     const { data, error } = await _supabase.from('pedidos').insert([{
         cliente_id: S.user.id,
-        cliente_nombre: S.user.email.split('@')[0],
+        cliente_nombre: S.user.nombre,
         comercio_id: rid,
         comercio_nombre: rname,
         detalle: 'Pedido de prueba: Combo del día',
@@ -184,15 +161,7 @@ function renderOrders() {
     `).join('');
 }
 
-_supabase.channel('cambios-cliente')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, payload => {
-        cargarPedidos();
-        if(payload.new && payload.new.cliente_id === S.user.id) {
-            toast('Actualización', 'Tu pedido cambió a: ' + payload.new.estado);
-        }
-    }).subscribe();
-
-checkSession();
+_supabase.channel('cambios-cliente').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => cargarPedidos()).subscribe();
 </script>
 </body>
 </html>
