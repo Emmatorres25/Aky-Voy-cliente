@@ -145,7 +145,34 @@ if(ld('ak_u',null)){S.user=ld('ak_u');document.getElementById('pgL').style.displ
 
 function iA(){rH();rS();rR();rC();rO();uB();S.cart=ld('ak_cart',[])}
 function goT(t){var ts=['home','search','reels','cart','orders'];for(var i=0;i<ts.length;i++){var el=document.getElementById('t-'+ts[i]);if(el)el.style.display='none'}var el2=document.getElementById('t-'+t);if(el2)el2.style.display='block';var ns=document.querySelectorAll('.ni');for(var j=0;j<ns.length;j++){ns[j].classList.toggle('on',ts[j]===t)}if(t==='track')rTk()}
+async function rO() {
+    const { data, error } = await _supabase
+        .from('pedidos')
+        .select('*')
+        .order('id', { ascending: false });
 
+    if (error) return;
+    S.orders = data;
+
+    var el = document.getElementById('t-orders');
+    if (!el) return;
+
+    var h = '<div class="page"><div style="padding:12px 14px">';
+    h += '<h3 style="font-weight:700;font-size:15px;margin-bottom:10px"><i class="fas fa-receipt" style="margin-right:6px"></i>Mis Pedidos</h3>';
+
+    if (S.orders.length === 0) {
+        h += '<div style="text-align:center;padding:40px 0;color:var(--tx3)">No hay pedidos activos</div>';
+    } else {
+        for (var i = 0; i < S.orders.length; i++) {
+            var o = S.orders[i];
+            var color = o.Estado === 'Entregado' ? 'var(--ok)' : 'var(--p)';
+            h += '<div class="gc" style="padding:12px;margin-bottom:8px; border-left: 4px solid ' + color + '">';
+            h += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+            h += '<span style="font-weight:700;font-size:13px">Pedido #' + o.id + '</span>';
+            h += '<span class="badge" style="background:' + color + ';color:#fff;padding:2px 6px;border-radius:4px;font-size:10px">' + (o.Estado || 'Pendiente') + '</span>';
+            h += '</div>';
+            h += '<div style="font-size:11px;color:var(--
+  
 function rH(){
 var el=document.getElementById('t-home');
 var cats=[{n:'Criollo',i:'fa-drumstick-fried',c:'criollo'},{n:'Pizza',i:'fa-pizza-slice',c:'pizza'},{n:'Sushi',i:'fa-fish',c:'sushi'},{n:'Hamburguesa',i:'fa-burger',c:'hamburguesa'},{n:'Bebidas',i:'fa-glass-water',c:'bebida'}];
@@ -252,12 +279,16 @@ async function pP(code,total){
   }
   // --- FIN DE LO NUEVO ---
 
-  S.orders.unshift(order);
-  sv('ak_c_o',S.orders);
-  S.cart=[];
-  sv('ak_cart',S.cart);
-  rC();
-  rO();
+  const { data: pedidosDb } = await _supabase.from('pedidos').select('*');
+if (pedidosDb) {
+    S.orders = pedidosDb; // Metemos los pedidos de Supabase en la lista de la app
+}
+sv('ak_c_o', S.orders);
+S.cart = [];
+sv('ak_cart', S.cart);
+rC();
+rO();
+  }
   toast('Pedido Confirmado','Pedido '+code+' creado','ok');
   
   // Tu lógica de notificaciones local sigue igual
@@ -272,6 +303,78 @@ function uB(){var n=0;for(var i=0;i<S.orders.length;i++){var o=S.orders[i];if(o.
 function rTk(){var el=document.getElementById('t-track');var o=mf(S.orders,function(x){return x.status==='delivering'});if(!o){el.innerHTML='<div class="page" style="padding:30px 14px;text-align:center;color:var(--tx3)"><i class="fas fa-map-location-dot" style="font-size:24px;display:block;margin-bottom:8px">Sin entregas activas</div>';return}S.tO=o.code;S.np=false;el.innerHTML='<div class="page"><div style="padding:12px 14px"><h3 style="font-weight:700;font-size:15px;margin-bottom:10px"><i class="fas fa-location-dot" style="color:var(--pl);margin-right:6px"></i>Rastreo en Vivo</h3><div id="tMap" style="height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--bd);margin-bottom:10px"></div><div class="gc" style="padding:12px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ok)"><i class="fas fa-motorcycle" style="color:#fff;font-size:12px"></i></div><div style="flex:1"><div style="font-weight:600;font-size:12px">'+(o.driver||'Repartidor')+'</div><div style="font-size:10px;color:var(--tx2)">Asignado</div></div><div style="margin-left:auto"><span class="badge bOk"><i class="fas fa-circle" style="font-size:4px"></i>En camino</span></div></div><div class="pbar" style="margin-bottom:3px"><div class="pfill" id="tPr" style="width:0%;background:linear-gradient(90deg,var(--p),var(--a))"></div></div><div style="text-align:right;font-size:10px;color:var(--tx3)" id="tPc">0%</div><div style="display:flex;flex-direction:column;gap:12px;margin-top:12px"><div style="display:flex;gap:10px;position:relative"><div style="width:9px;height:9px;border-radius:50%;border:2px solid var(--p);background:var(--p);flex-shrink:0;margin-top:2px"></div><div style="position:absolute;left:3px;top:15px;bottom:-4px;width:2px;background:var(--bd)"></div><div style="font-size:12px;font-weight:600">Confirmado</div></div><div style="display:flex;gap:10px;position:relative"><div style="width:9px;height:9px;border-radius:50%;border:2px solid var(--p);background:var(--p);flex-shrink:0;margin-top:2px"></div><div style="position:absolute;left:3px;top:15px;bottom:-4px;width:2px;background:var(--bd)"></div><div style="font-size:12px;font-weight:600">Aceptado</div></div><div style="display:flex;gap:10px;position:relative"><div style="width:9px;height:9px;border-radius:50%;border:2px solid var(--a);background:var(--a);flex-shrink:0;margin-top:2px;box-shadow:0 0 6px rgba(245,158,11,.4)"></div><div style="position:absolute;left:3px;top:15px;bottom:-4px;width:2px;background:var(--bd)"></div><div style="font-size:12px;font-weight:600">En camino</div></div><div style="display:flex;gap:10px;position:relative"><div style="width:9px;height:9px;border-radius:50%;border:2px solid var(--bd);background:var(--bg);flex-shrink:0;margin-top:2px"></div><div style="font-size:12px;font-weight:600;color:var(--tx3)">Entrega ~15-20 min</div></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button onclick="toast(\'Chat\',\'Abriendo chat...\',\'info\')" class="bS" style="font-size:11px"><i class="fas fa-comment" style="margin-right:3px"></i>Chat</button><button onclick="toast(\'Llamar\',\'Conectando...\',\'info\')" class="bS" style="font-size:11px"><i class="fas fa-phone" style="margin-right:3px"></i>Llamar</button></div></div></div></div>';setTimeout(iTk,100)}
 
 function iTk(){if(S.maps.tk){S.maps.tk.remove();S.maps.tk=null}if(S.tI){clearInterval(S.tI);S.tI=null}S.mp=gR();S.mi=0;S.np=false;var map=L.map('tMap',{zoomControl:false}).setView(CO.c,15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);S.maps.tk=map;var rI=L.divIcon({html:'<div style="background:var(--a);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"><i class="fas fa-store" style="color:#000;font-size:10px"></i></div>',iconSize:[26,26],iconAnchor:[13,13],className:''});L.marker(CO.r,{icon:rI}).addTo(map).bindPopup('Comedor');var cI=L.divIcon({html:'<div style="background:var(--p);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"><i class="fas fa-house" style="color:#fff;font-size:10px"></i></div>',iconSize:[26,26],iconAnchor:[13,13],className:''});L.marker(CO.cl,{icon:cI}).addTo(map).bindPopup('Tu ubicación');L.polyline(S.mp,{color:'#7C3AED',weight:3,opacity:.5,dashArray:'8 8'}).addTo(map);var mI=L.divIcon({html:'<div class="motoMk"><svg viewBox="0 0 48 48" width="36" height="36"><circle cx="24" cy="24" r="20" fill="#7C3AED" stroke="#fff" stroke-width="2.5"/><path d="M14 28l3-7h5l1.5 3h5l-1.5-3h2.5l3.5 7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="30" r="3" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="33" cy="30" r="3" fill="none" stroke="#fff" stroke-width="1.5"/></svg></div>',iconSize:[36,36],iconAnchor:[18,18],className:''});S.mM=L.marker(S.mp[0],{icon:mI}).addTo(map);S.tI=setInterval(function(){S.mi++;if(S.mi>=S.mp.length){S.mi=0;var o2=mf(S.orders,function(x){return x.code===S.tO});if(o2){o2.status='delivered';sv('ak_c_o',S.orders);rO();toast('Entregado','Disfruta tu comida','ok');uB();clearInterval(S.tI)}return}S.mM.setLatLng(S.mp[S.mi]);var pct=Math.round(S.mi/S.mp.length*100);var pr=document.getElementById('tPr');var pc=document.getElementById('tPc');if(pr)pr.style.width=pct+'%';if(pc)pc.textContent=pct+'%';if(pct>75&&!S.np){S.np=true;toast('Tu pedido está cerca','Llega en minutos','wn')}},900)}
+async function sincronizarPedidosDesdeSupabase() {
+    const { data: pedidosDb, error } = await _supabase
+        .from('pedidos')
+        .select('*')
+        .order('id', { ascending: false });
+
+    if (pedidosDb) {
+        S.orders = pedidosDb; 
+        rO(); 
+    }
+}
+  // --- 1. FUNCIÓN PARA DIBUJAR LOS PEDIDOS (LO QUE NO ENCONTRABAS) ---
+function rO() {
+    var el = document.getElementById('t-orders');
+    if (!el) return;
+
+    var h = '<div class="page"><div style="padding:12px 14px">';
+    h += '<h2 style="font-size:18px;font-weight:700;margin-bottom:12px">Mis Pedidos</h2>';
+
+    if (!S.orders || S.orders.length === 0) {
+        h += '<div style="text-align:center;padding:40px 0;color:var(--tx3)"><i class="fas fa-receipt" style="font-size:24px;display:block;margin-bottom:8px"></i>Aún no hay pedidos</div>';
+    } else {
+        S.orders.forEach(o => {
+            // Colores por estado
+            let color = o.Estado === 'Entregado' ? 'var(--ok)' : 'var(--p)';
+            h += `
+            <div class="gc" style="padding:12px;margin-bottom:10px;border-left:4px solid ${color}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <span style="font-weight:700;font-size:13px">Pedido #${o.id}</span>
+                    <span class="badge ${o.Estado === 'Entregado' ? 'bOk' : 'bPr'}">${o.Estado || 'Pendiente'}</span>
+                </div>
+                <div style="font-size:11px;color:var(--tx2);margin-bottom:4px">
+                    <i class="fas fa-store" style="margin-right:4px"></i> ${o.comercio || 'AkyVoy Store'}
+                </div>
+                <div style="font-size:10px;color:var(--tx3)">${o.detalle || 'Procesando...'}</div>
+            </div>`;
+        });
+    }
+    h += '</div></div>';
+    el.innerHTML = h;
+}
+
+// --- 2. SINCRONIZACIÓN INICIAL CON SUPABASE ---
+async function cargarPedidos() {
+    const { data, error } = await _supabase
+        .from('pedidos')
+        .select('*')
+        .order('id', { ascending: false });
+
+    if (data) {
+        S.orders = data;
+        rO();
+    }
+}
+
+// --- 3. TIEMPO REAL (MAGIC): ESCUCHA CAMBIOS DE COMERCIO Y REPARTIDOR ---
+_supabase
+    .channel('cambios-pedidos')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
+        console.log('Cambio detectado:', payload);
+        // Si el estado cambió (Cocinando, En Camino, etc.), actualizamos la lista
+        cargarPedidos(); 
+        
+        // Si el estado es "En Camino", avisamos al cliente
+        if(payload.new.Estado === 'En Camino') {
+            toast('¡Tu pedido va en camino!', 'El repartidor ya salió del comedor', 'ok');
+        }
+    })
+    .subscribe();
+
+// Llamada inicial para que al abrir la app ya salgan los pedidos
+cargarPedidos();
 </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="conexion.js"></script>
