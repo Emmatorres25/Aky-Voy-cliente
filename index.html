@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--tx);min-height:100vh}
 <div id="pgA" style="display:none">
     <header class="p-4 border-bottom border-gray-800 flex justify-between items-center">
         <span class="font-bold">AkyVoy</span>
-        <button onclick="location.reload()" class="text-xs text-red-400">Salir</button>
+        <button onclick="doLogout()" class="text-xs text-red-400">Salir</button>
     </header>
     <div id="t-home" class="page">
         <h2 class="text-xl font-bold mb-4">Comedores Disponibles</h2>
@@ -75,7 +75,6 @@ async function doLogin() {
     const tel = document.getElementById('lTel').value;
     if(!nombre || !tel) return alert('Completa los campos');
     
-    // Buscar o Crear Perfil de Cliente
     const { data: perfil, error } = await _supabase.from('perfiles').select('*').eq('id', tel).single();
     
     if(!perfil) {
@@ -84,10 +83,24 @@ async function doLogin() {
     }
     
     S.user = { id: tel, nombre };
-    document.getElementById('pgL').style.display = 'none';
-    document.getElementById('pgA').style.display = 'block';
-    renderRests();
-    cargarPedidos();
+    localStorage.setItem('aky_user', JSON.stringify(S.user));
+    initApp();
+}
+
+function doLogout() {
+    localStorage.removeItem('aky_user');
+    location.reload();
+}
+
+function initApp() {
+    const saved = localStorage.getItem('aky_user');
+    if(saved) {
+        S.user = JSON.parse(saved);
+        document.getElementById('pgL').style.display = 'none';
+        document.getElementById('pgA').style.display = 'block';
+        renderRests();
+        cargarPedidos();
+    }
 }
 
 function goT(t) {
@@ -162,6 +175,8 @@ function renderOrders() {
 }
 
 _supabase.channel('cambios-cliente').on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => cargarPedidos()).subscribe();
+
+initApp();
 </script>
 </body>
 </html>
