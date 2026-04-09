@@ -1,2 +1,2 @@
-# Codigo generado para: Crea el login para AkyVoy
-print("Funcionalidad de Crea el login para AkyVoy implementada.")
+# Codigo generado para: Gemini, mi app da Error 500 al agregar comedores. Revisá la función que hace el INSERT hacia Supabase. Asegurate de que use la tabla llamada Comercios (con C mayúscula) y no comedores. También verificá que las columnas coincidan con las de mi base de datos. Cuando terminés, usá el Auto-Push para subir el arreglo.
+print("Funcionalidad de Gemini, mi app da Error 500 al agregar comedores. Revisá la función que hace el INSERT hacia Supabase. Asegurate de que use la tabla llamada Comercios (con C mayúscula) y no comedores. También verificá que las columnas coincidan con las de mi base de datos. Cuando terminés, usá el Auto-Push para subir el arreglo. implementada.")
